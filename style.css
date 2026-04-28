@@ -1,0 +1,213 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-image: url('fond.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    font-family: system-ui, 'Segoe UI', sans-serif;
+    padding: 1rem;
+    max-width: 1200px;
+    margin: auto;
+}
+
+/* ===== HERO BANNER ===== */
+.hero {
+    background: linear-gradient(135deg, rgba(30,60,114,0.85), rgba(42,82,152,0.85));
+    backdrop-filter: blur(4px);
+    color: white;
+    padding: 2rem;
+    border-radius: 32px;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+.hero h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+.hero p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+/* ===== CATÉGORIES ===== */
+.categories {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.8rem;
+    margin-bottom: 2rem;
+}
+.categorie-btn {
+    background: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 40px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+.categorie-btn.active {
+    background: #1e3c72;
+    color: white;
+}
+.categorie-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* ===== RECHERCHE ===== */
+.search-bar {
+    margin-bottom: 2rem;
+}
+.search-bar input {
+    width: 100%;
+    padding: 14px 20px;
+    border-radius: 50px;
+    border: none;
+    font-size: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* ===== SECTION TITRE ===== */
+.section-title {
+    font-size: 1.6rem;
+    margin-bottom: 1.2rem;
+    font-weight: bold;
+    border-left: 5px solid #1e3c72;
+    padding-left: 15px;
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+/* ===== GRILLE PRODUITS ===== */
+.produits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.5rem;
+}
+.produit-card {
+    background: rgba(255,255,255,0.95);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    backdrop-filter: blur(2px);
+}
+.produit-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+}
+.produit-image {
+    height: 200px;
+    background: #f4f6fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    overflow: hidden;
+}
+.produit-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.produit-info {
+    padding: 1rem;
+}
+.produit-titre {
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-bottom: 0.3rem;
+}
+.produit-prix {
+    color: #1e3c72;
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin: 8px 0;
+}
+.produit-categorie {
+    display: inline-block;
+    background: #eef2ff;
+    color: #1e3c72;
+    font-size: 0.7rem;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+}
+.btn-contact {
+    background: #25D366;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 40px;
+    width: 100%;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background 0.2s;
+}
+.btn-contact:hover {
+    background: #128C7E;
+}
+
+/* ===== SECTEUR ===== */
+.secteur-select {
+    text-align: center;
+    margin-bottom: 20px;
+}
+select {
+    padding: 10px 20px;
+    border-radius: 30px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+}
+
+/* ===== MODAL ===== */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+.modal-content {
+    background: white;
+    max-width: 400px;
+    width: 90%;
+    border-radius: 28px;
+    padding: 1.5rem;
+    text-align: center;
+    position: relative;
+}
+.close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+/* ===== FOOTER ===== */
+footer {
+    text-align: center;
+    margin-top: 3rem;
+    padding: 1rem;
+    color: white;
+    text-shadow: 1px 1px 2px black;
+}
+#secretAdminTrigger {
+    cursor: pointer;
+}

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ht">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>PIYAYY - Admin</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Piyayy">
+    <meta name="theme-color" content="#1e3c72">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <style>
+        body {
+            font-family: system-ui;
+            background: #f0f2f5;
+            padding: 1rem;
+            max-width: 800px;
+            margin: auto;
+        }
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 16px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background: #1e3c72;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button.danger {
+            background: #c0392b;
+        }
+        button.secondary {
+            background: #27ae60;
+        }
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 16px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        .preview-img {
+            max-width: 100px;
+            max-height: 100px;
+            border-radius: 12px;
+            margin-top: 10px;
+        }
+        .produit-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f9f9f9;
+            padding: 0.8rem;
+            border-radius: 20px;
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .produit-actions button {
+            margin-left: 5px;
+            padding: 5px 10px;
+            font-size: 0.8rem;
+        }
+        .buttons-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>🏋️‍♂️🏋️‍♀️</h1>
+
+    <!-- Sauvegarde / Restauration -->
+    <div class="card">
+        <h2>💾 Sauvegarde / Restauration</h2>
+        <div class="buttons-group">
+            <button id="exporterBtn">📁 Sauvegarder les produits (JSON)</button>
+            <button id="importerBtn" class="secondary">📂 Restaurer depuis un fichier</button>
+            <input type="file" id="fichierImport" accept=".json" style="display: none;">
+        </div>
+        <p style="font-size: 0.8rem; margin-top: 10px;">💡 Sauvegardez vos produits dans un fichier pour ne jamais les perdre.</p>
+    </div>
+
+    <!-- Ajouter un produit -->
+    <div class="card">
+        <h2>➕ Ajouter un produit</h2>
+        <input type="text" id="nom" placeholder="Nom du produit">
+        <input type="text" id="prix" placeholder="Prix (ex: 35$)">
+        <select id="categorie">
+            <option value="Protéine">💪 Protéine</option>
+            <option value="Créatine">⚡ Créatine</option>
+            <option value="Vitamine">💊 Vitamine</option>
+            <option value="Pre-Workout">📦 Pre-Workout</option>
+            <option value="BCAA">📦 BCAA</option>
+            <option value="SHACKER">📦 SHACKER</option>
+        </select>
+
+        <div class="upload-area" id="uploadArea">
+            📸 Cliquez pour ajouter une image
+            <input type="file" id="imageFile" accept="image/*" style="display: none;">
+            <div id="imagePreview" class="preview-img"></div>
+        </div>
+
+        <textarea id="description" rows="2" placeholder="Description"></textarea>
+        <button id="ajouterBtn">➕ Ajouter</button>
+    </div>
+
+    <!-- Liste des produits avec modification et suppression -->
+    <div class="card">
+        <h2>📋 Gestion des produits</h2>
+        <div id="listeProduitsAdmin"></div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        let imageData = null;
+
+        // Upload image
+        document.getElementById("uploadArea").addEventListener("click", () => {
+            document.getElementById("imageFile").click();
+        });
+        document.getElementById("imageFile").addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    imageData = ev.target.result;
+                    document.getElementById("imagePreview").innerHTML = `<img src="${imageData}" class="preview-img">`;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Afficher la liste admin avec boutons Modifier / Supprimer
+        function afficherListeAdmin() {
+            const container = document.getElementById("listeProduitsAdmin");
+            if (!produits.length) {
+                container.innerHTML = "<p>Aucun produit</p>";
+                return;
+            }
+            let html = "";
+            produits.forEach(p => {
+                html += `
+                    <div class="produit-item">
+                        <div>
+                            <strong>${escapeHtml(p.nom)}</strong> - ${escapeHtml(p.prix)}<br>
+                            <small>${escapeHtml(p.categorie)}</small>
+                        </div>
+                        <div class="produit-actions">
+                            <button class="modifier-btn" data-id="${p.id}">✏️ Modifier</button>
+                            <button class="supprimer-btn" data-id="${p.id}">🗑️ Supprimer</button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+
+            // Événement Supprimer
+            document.querySelectorAll(".supprimer-btn").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const id = parseInt(btn.getAttribute("data-id"));
+                    if (confirm("Supprimer ce produit ?")) {
+                        produits = produits.filter(p => p.id !== id);
+                        sauvegarderProduits();
+                        afficherListeAdmin();
+                        if (typeof appliquerFiltres === "function") appliquerFiltres();
+                    }
+                });
+            });
+
+            // Événement Modifier
+            document.querySelectorAll(".modifier-btn").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const id = parseInt(btn.getAttribute("data-id"));
+                    modifierProduit(id);
+                });
+            });
+        }
+
+        // Modifier un produit (avec catégorie modifiable)
+        function modifierProduit(id) {
+            const produit = produits.find(p => p.id === id);
+            if (!produit) return;
+
+            const nouveauNom = prompt("Nouveau nom :", produit.nom);
+            if (nouveauNom !== null && nouveauNom.trim() !== "") produit.nom = nouveauNom.trim();
+
+            const nouveauPrix = prompt("Nouveau prix :", produit.prix);
+            if (nouveauPrix !== null && nouveauPrix.trim() !== "") produit.prix = nouveauPrix.trim();
+
+            // Changement de catégorie avec liste déroulante visuelle
+            const nouvelleCategorie = prompt("Nouvelle catégorie (Protéine, Créatine, Vitamine, Pre-Workout) :", produit.categorie);
+            if (nouvelleCategorie !== null && nouvelleCategorie.trim() !== "") produit.categorie = nouvelleCategorie.trim();
+
+            const nouvelleDescription = prompt("Nouvelle description :", produit.description || "");
+            if (nouvelleDescription !== null) produit.description = nouvelleDescription;
+
+            if (confirm("Changer l'image ?")) {
+                const input = document.createElement("input");
+                input.type = "file";
+                input.accept = "image/*";
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                            produit.image = ev.target.result;
+                            sauvegarderProduits();
+                            afficherListeAdmin();
+                            if (typeof appliquerFiltres === "function") appliquerFiltres();
+                            alert("✅ Produit modifié (image comprise) !");
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                };
+                input.click();
+            } else {
+                sauvegarderProduits();
+                afficherListeAdmin();
+                if (typeof appliquerFiltres === "function") appliquerFiltres();
+                alert("✅ Produit modifié !");
+            }
+        }
+
+        // Ajouter produit
+        document.getElementById("ajouterBtn").addEventListener("click", () => {
+            const nom = document.getElementById("nom").value.trim();
+            const prix = document.getElementById("prix").value.trim();
+            const categorie = document.getElementById("categorie").value;
+            const description = document.getElementById("description").value.trim();
+            if (!nom || !prix) return alert("Nom et prix requis");
+            produits.push({
+                id: Date.now(),
+                nom,
+                prix,
+                categorie,
+                description,
+                image: imageData || null
+            });
+            sauvegarderProduits();
+            afficherListeAdmin();
+            if (typeof appliquerFiltres === "function") appliquerFiltres();
+            document.getElementById("nom").value = "";
+            document.getElementById("prix").value = "";
+            document.getElementById("description").value = "";
+            document.getElementById("imagePreview").innerHTML = "";
+            imageData = null;
+            alert("✅ Produit ajouté");
+        });
+
+        // Sauvegarde / Restauration
+        function exporterProduits() {
+            const data = JSON.stringify(produits, null, 2);
+            const blob = new Blob([data], {type: "application/json"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `piyayy_produits_${new Date().toISOString().slice(0,19)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            alert("✅ Produits sauvegardés !");
+        }
+
+        document.getElementById("exporterBtn").addEventListener("click", exporterProduits);
+
+        document.getElementById("importerBtn").addEventListener("click", () => {
+            document.getElementById("fichierImport").click();
+        });
+
+        document.getElementById("fichierImport").addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const nouveauxProduits = JSON.parse(ev.target.result);
+                    if (Array.isArray(nouveauxProduits)) {
+                        produits = nouveauxProduits;
+                        sauvegarderProduits();
+                        afficherListeAdmin();
+                        if (typeof appliquerFiltres === "function") appliquerFiltres();
+                        alert("✅ Produits restaurés avec succès !");
+                    } else {
+                        alert("❌ Fichier invalide");
+                    }
+                } catch (err) {
+                    alert("❌ Erreur de lecture du fichier");
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        afficherListeAdmin();
+    </script>
+</body>
+</html>

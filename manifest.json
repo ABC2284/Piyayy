@@ -1,0 +1,17 @@
+{
+  "name": "PIYAYY",
+  "short_name": "Piyayy",
+  "description": "Achète facilement à Maïssade et Hinche",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#1e3c72",
+  "theme_color": "#1e3c72",
+  "icons": [
+    {
+      "src": "icon-piyayy.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

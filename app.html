@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ht">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>PIYAYY - Boutique</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="icon-192.png">
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Piyayy">
+    <meta name="theme-color" content="#1e3c72">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="apple-touch-startup-image" href="fond-splash.jpg">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-image: url('fond.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            font-family: system-ui, 'Segoe UI', sans-serif;
+            padding: 1rem;
+            max-width: 1200px;
+            margin: auto;
+            transition: background-image 0.3s ease;
+        }
+
+        .nav-menu {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .nav-menu a {
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(8px);
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: bold;
+            color: #1e3c72;
+            font-size: 0.9rem;
+            transition: 0.2s;
+        }
+        .nav-menu a.active {
+            background: #1e3c72;
+            color: white;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, rgba(30, 60, 114, 0.85), rgba(42, 82, 152, 0.85));
+            backdrop-filter: blur(4px);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 32px;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .hero h1 {
+            font-size: 2rem;
+        }
+        .hero p {
+            font-size: 0.85rem;
+        }
+
+        .categories {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .categorie-btn {
+            background: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.8rem;
+            transition: 0.2s;
+        }
+        .categorie-btn.active {
+            background: #1e3c72;
+            color: white;
+        }
+
+        .search-bar {
+            margin-bottom: 1.5rem;
+        }
+        .search-bar input {
+            width: 100%;
+            padding: 10px 15px;
+            border-radius: 50px;
+            border: none;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(4px);
+            font-size: 0.9rem;
+        }
+
+        .produits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+        }
+        .produit-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            transition: 0.3s;
+            backdrop-filter: blur(4px);
+            cursor: pointer;
+        }
+        .produit-card:hover {
+            transform: translateY(-4px);
+        }
+
+        /* Images : taille fixe + ajustement parfait */
+        .produit-image {
+            width: 100%;
+            height: 140px;
+            background: #f4f6fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .produit-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .produit-image div {
+            font-size: 2.5rem;
+        }
+
+        .produit-info {
+            padding: 0.8rem;
+        }
+        .produit-titre {
+            font-weight: bold;
+            font-size: 0.85rem;
+            margin-bottom: 0.2rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .produit-prix {
+            color: #1e3c72;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin: 5px 0;
+        }
+        .btn-contact {
+            background: linear-gradient(95deg, #25D366, #128C7E);
+            color: white;
+            border: none;
+            padding: 6px;
+            border-radius: 30px;
+            width: 100%;
+            font-weight: bold;
+            font-size: 0.7rem;
+            cursor: pointer;
+            margin-top: 5px;
+        }
+
+        .secteur-select {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        select {
+            padding: 8px 15px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            max-width: 350px;
+            width: 90%;
+            border-radius: 28px;
+            padding: 1.2rem;
+            text-align: center;
+        }
+        .close {
+            float: right;
+            font-size: 1.3rem;
+            cursor: pointer;
+        }
+
+        footer {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            border-radius: 40px;
+            padding: 1rem;
+            margin-top: 2rem;
+            text-align: center;
+            color: white;
+            font-size: 0.7rem;
+        }
+        #secretAdminTrigger {
+            cursor: pointer;
+            font-size: 0.7rem;
+            display: inline-block;
+            margin-top: 5px;
+        }
+
+        /* Téléphone : 3 produits par ligne + images plus petites */
+        @media (max-width: 600px) {
+            body {
+                padding: 0.6rem;
+            }
+            .produits-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 0.5rem;
+            }
+            .produit-image {
+                height: 100px;
+            }
+            .produit-titre {
+                font-size: 0.7rem;
+                white-space: normal;
+                line-height: 1.2;
+            }
+            .produit-prix {
+                font-size: 0.7rem;
+            }
+            .btn-contact {
+                font-size: 0.6rem;
+                padding: 4px;
+            }
+            .hero h1 {
+                font-size: 1.5rem;
+            }
+            .categorie-btn {
+                padding: 4px 10px;
+                font-size: 0.7rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="nav-menu">
+        <a href="app.html" class="active">🏠 Accueil</a>
+    </div>
+
+    <div class="hero">
+        <h1>🛍️ PIYAYY</h1>
+        <p>Découvrez nos produits et contactez-nous directement</p>
+    </div>
+
+    <div class="secteur-select">
+        <label for="secteurSelect">📍 Votre secteur : </label>
+        <select id="secteurSelect">
+            <option value="maissade">🏠 Maïssade</option>
+            <option value="hinche">🏙️ Hinche</option>
+        </select>
+    </div>
+
+    <div class="categories" id="categoriesList"></div>
+
+    <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="🔍 Rechercher un produit...">
+    </div>
+
+    <div id="produitsList" class="produits-grid">
+        <p>Chargement...</p>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <footer>
+        <p>📍 Maïssade / Hinche | 📞 WhatsApp direct</p>
+        <p>© 2025 PIYAYY - Tous droits réservés</p>
+        <span id="secretAdminTrigger">🏋️‍♂️🏋️‍♀️</span>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("sw.js").catch(console.log);
+        }
+
+        function changerFondCategorie(categorie) {
+            let imageFond = "fond.jpg";
+            if (categorie === "Protéine") imageFond = "fond-proteine.jpg";
+            else if (categorie === "Créatine") imageFond = "fond-creatine.jpg";
+            else if (categorie === "Vitamine") imageFond = "fond-vitamine.jpg";
+            else if (categorie === "Pre-Workout") imageFond = "fond-Pre-Workout.jpg";
+            else if (categorie === "BCAA") imageFond = "fond-BCAA.jpg";
+            else if (categorie === "SHACKER") imageFond = "fond-SHACKER.jpg";
+            document.body.style.backgroundImage = `url('${imageFond}')`;
+            document.body.style.backgroundSize = "cover";
+            document.body.style.backgroundPosition = "center";
+            document.body.style.backgroundAttachment = "fixed";
+        }
+
+        function genererCategories() {
+            const container = document.getElementById("categoriesList");
+            const cats = ["Tous", "Protéine", "Créatine", "Vitamine", "Pre-Workout","BCAA","SHACKER"];
+            let html = `<button class="categorie-btn active" data-cat="all">📦 Tous</button>`;
+            cats.slice(1).forEach(c => {
+                html += `<button class="categorie-btn" data-cat="${c}">${c}</button>`;
+            });
+            container.innerHTML = html;
+            document.querySelectorAll(".categorie-btn").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    document.querySelectorAll(".categorie-btn").forEach(b => b.classList.remove("active"));
+                    btn.classList.add("active");
+                    const cat = btn.getAttribute("data-cat");
+                    filtreCategorie = cat === "all" ? "all" : cat;
+                    if (cat === "all") changerFondCategorie("Tous");
+                    else changerFondCategorie(cat);
+                    appliquerFiltres();
+                });
+            });
+        }
+
+        let filtreCategorie = "all";
+        let rechercheTexte = "";
+
+        function appliquerFiltres() {
+            let filtres = [...produits];
+            if (filtreCategorie !== "all") filtres = filtres.filter(p => p.categorie === filtreCategorie);
+            if (rechercheTexte) filtres = filtres.filter(p => p.nom.toLowerCase().includes(rechercheTexte));
+            afficherProduitsAvecFiltres(filtres);
+        }
+
+        function afficherProduitsAvecFiltres(liste) {
+            const container = document.getElementById("produitsList");
+            if (!container) return;
+            if (!Array.isArray(liste) || liste.length === 0) {
+                container.innerHTML = "<p style='text-align:center; padding:2rem;'>Aucun produit trouvé.</p>";
+                return;
+            }
+            let html = "";
+            liste.forEach(p => {
+                const imgHtml = p.image ? `<img src="${p.image}" alt="${p.nom}">` : `<div>📦</div>`;
+                html += `
+                    <div class="produit-card" data-id="${p.id}">
+                        <div class="produit-image">${imgHtml}</div>
+                        <div class="produit-info">
+                            <div class="produit-titre">${escapeHtml(p.nom)}</div>
+                            <div class="produit-prix">💰 ${escapeHtml(p.prix)}</div>
+                            <button class="btn-contact" data-id="${p.id}">📞 Contacter</button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+            document.querySelectorAll(".btn-contact").forEach(btn => {
+                btn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    const id = parseInt(btn.getAttribute("data-id"));
+                    const produit = produits.find(p => p.id === id);
+                    if (produit) contacterWhatsApp(produit);
+                });
+            });
+        }
+
+        function contacterWhatsApp(produit) {
+            const secteur = document.getElementById("secteurSelect").value;
+            const numero = secteur === "maissade" ? "50948819709" : "50936199431";
+            const message = `Bonjour, je suis intéressé(e) par : ${produit.nom} (${produit.prix})`;
+            window.open(`https://wa.me/${numero}?text=${encodeURIComponent(message)}`, '_blank');
+        }
+
+        document.getElementById("searchInput")?.addEventListener("input", (e) => {
+            rechercheTexte = e.target.value.toLowerCase();
+            appliquerFiltres();
+        });
+
+        document.getElementById("secretAdminTrigger")?.addEventListener("click", () => {
+            const code = prompt("🔐 Code administrateur :");
+            if (code === "2025202620272028") window.location.href = "admin.html";
+            else if (code) alert("❌ Code incorrect");
+        });
+
+        genererCategories();
+        appliquerFiltres();
+    </script>
+</body>
+</html>
