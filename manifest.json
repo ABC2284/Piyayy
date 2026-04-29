@@ -2,7 +2,7 @@
   "name": "PIYAYY",
   "short_name": "Piyayy",
   "description": "Application boutique pour Maïssade et Hinche",
-  "start_url": "./app.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#1e3c72",
   "theme_color": "#1e3c72",
