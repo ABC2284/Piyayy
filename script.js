@@ -1,40 +1,43 @@
 // ============================================
-// PIYAYY - SCRIPT ULTRA SOLIDE (sans bibliothèque)
+// PIYAYY - SCRIPT AVEC PRODUITS.JSON
 // ============================================
 
-// ---------- PRODUITS ----------
 let produits = [];
 
-function initialiserProduits() {
-    const saved = localStorage.getItem("piyayy_produits");
-    if (saved) {
-        try {
-            produits = JSON.parse(saved);
-            if (!Array.isArray(produits)) produits = [];
-        } catch(e) {
-            produits = [];
+// Charger les produits depuis le fichier JSON (visible pour tous)
+async function chargerProduits() {
+    try {
+        const response = await fetch("produits.json");
+        if (!response.ok) throw new Error("Fichier produits.json introuvable");
+        produits = await response.json();
+        console.log("✅ Produits chargés depuis produits.json:", produits.length);
+        
+        // Rafraîchir l’affichage si la fonction existe
+        if (typeof appliquerFiltres === "function") {
+            appliquerFiltres();
+        }
+    } catch (error) {
+        console.error("❌ Erreur chargement produits:", error);
+        produits = [];
+        if (typeof appliquerFiltres === "function") {
+            appliquerFiltres();
         }
     }
-    if (!produits.length) {
-        produits = [];
-        sauvegarderProduits();
-    }
 }
 
+// Sauvegarde (optionnelle, pour utilisation hors ligne)
 function sauvegarderProduits() {
-    localStorage.setItem("piyayy_produits", JSON.stringify(produits));
+    localStorage.setItem("piyayy_produits_backup", JSON.stringify(produits));
 }
 
-function ajouterProduit(produit) {
-    if (!produit || !produit.nom) return false;
-    produits.push(produit);
-    sauvegarderProduits();
-    return true;
-}
-
-function supprimerProduit(id) {
-    produits = produits.filter(p => p.id != id);
-    sauvegarderProduits();
+// Charger depuis le backup (si pas de réseau)
+function chargerProduitsBackup() {
+    const saved = localStorage.getItem("piyayy_produits_backup");
+    if (saved) {
+        produits = JSON.parse(saved);
+        console.log("📦 Produits chargés depuis backup local");
+        if (typeof appliquerFiltres === "function") appliquerFiltres();
+    }
 }
 
 // ---------- UTILITAIRES ----------
@@ -48,11 +51,9 @@ function escapeHtml(str) {
     });
 }
 
-// Initialisation
-initialiserProduits();
+// Initialisation : on charge depuis le fichier JSON
+chargerProduits();
 
 // Exposer globalement
 window.produits = produits;
 window.sauvegarderProduits = sauvegarderProduits;
-window.ajouterProduit = ajouterProduit;
-window.supprimerProduit = supprimerProduit;
