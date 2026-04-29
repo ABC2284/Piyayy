@@ -5,7 +5,7 @@
 const CACHE_NAME = 'piyayy-cache-v2';
 const urlsToCache = [
   './',
-  './app.html',
+  './index.html',
   './admin.html',
   './style.css',
   './script.js',
