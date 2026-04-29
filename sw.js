@@ -1,21 +1,20 @@
 // ============================================
-// PIYAYY - Service Worker
-// Version : 1.0.0
+// PIYAYY - Service Worker (chemins relatifs)
 // ============================================
 
-const CACHE_NAME = 'piyayy-cache-v1';
+const CACHE_NAME = 'piyayy-cache-v2';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/admin.html',
-  '/style.css',
-  '/script.js',
-  '/fond.jpg',
-  '/icon-piyayy.png',
-  '/manifest.json'
+  './',
+  './index.html',
+  './admin.html',
+  './style.css',
+  './script.js',
+  './produits.json',
+  './fond.jpg',
+  './icon-piyayy.png',
+  './manifest.json'
 ];
 
-// Installation du Service Worker
 self.addEventListener('install', event => {
   console.log('[SW] Installation...');
   event.waitUntil(
@@ -29,7 +28,6 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
-// Activation : nettoyer les anciens caches
 self.addEventListener('activate', event => {
   console.log('[SW] Activation...');
   event.waitUntil(
@@ -47,18 +45,12 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// Interception des requêtes réseau
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
       .then(response => {
-        // Si le fichier est dans le cache, on le renvoie
-        if (response) {
-          return response;
-        }
-        // Sinon, on va le chercher sur le réseau
+        if (response) return response;
         return fetch(event.request).then(response => {
-          // On met en cache la nouvelle version
           if (response && response.status === 200) {
             const responseToCache = response.clone();
             caches.open(CACHE_NAME).then(cache => {
@@ -69,9 +61,8 @@ self.addEventListener('fetch', event => {
         });
       })
       .catch(() => {
-        // Si hors ligne et fichier non trouvé
         if (event.request.destination === 'document') {
-          return caches.match('/index.html');
+          return caches.match('./index.html');
         }
       })
   );
