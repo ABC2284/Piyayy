@@ -1,12 +1,8 @@
-// ============================================
-// PIYAYY - Service Worker (chemins relatifs)
-// ============================================
-
-const CACHE_NAME = 'piyayy-cache-v2';
+const CACHE_NAME = 'piyayy-cache-v3';
 const urlsToCache = [
   './',
-  './index.html',
   './splash.html',
+  './index.html',
   './admin.html',
   './style.css',
   './script.js',
@@ -19,12 +15,10 @@ const urlsToCache = [
 self.addEventListener('install', event => {
   console.log('[SW] Installation...');
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('[SW] Mise en cache des fichiers');
-        return cache.addAll(urlsToCache);
-      })
-      .catch(err => console.log('[SW] Erreur cache:', err))
+    caches.open(CACHE_NAME).then(cache => {
+      console.log('[SW] Mise en cache des fichiers');
+      return cache.addAll(urlsToCache);
+    })
   );
   self.skipWaiting();
 });
@@ -48,23 +42,25 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        if (response) return response;
-        return fetch(event.request).then(response => {
-          if (response && response.status === 200) {
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME).then(cache => {
-              cache.put(event.request, responseToCache);
-            });
-          }
-          return response;
-        });
-      })
-      .catch(() => {
-        if (event.request.destination === 'document') {
-          return caches.match('./app.html');
+    caches.match(event.request).then(response => {
+      if (response) {
+        return response;
+      }
+      return fetch(event.request).then(response => {
+        if (response && response.status === 200) {
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseToCache);
+          });
         }
-      })
+        return response;
+      });
+    }).catch(() => {
+      // Fallback hors ligne : si on demande une page, on renvoie splash.html
+      if (event.request.destination === 'document') {
+        return caches.match('./splash.html');
+      }
+      return new Response('Hors ligne', { status: 503 });
+    })
   );
 });
