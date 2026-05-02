@@ -1,4 +1,4 @@
-const CACHE_NAME = 'piyayy-cache-v2';
+const CACHE_NAME = 'piyayy-cache-v3';
 const urlsToCache = [
   './',
   './splash.html',
@@ -8,6 +8,7 @@ const urlsToCache = [
   './script.js',
   './produits.json',
   './fond.jpg',
+  './fond-splash.jpg',
   './icon-piyayy.png',
   './manifest.json'
 ];
@@ -56,7 +57,7 @@ self.addEventListener('fetch', event => {
         return response;
       });
     }).catch(() => {
-      // Fallback hors ligne : si on demande une page, on renvoie splash.html
+      // Fallback hors ligne : si on demande une page HTML, on renvoie splash.html
       if (event.request.destination === 'document') {
         return caches.match('./splash.html');
       }
