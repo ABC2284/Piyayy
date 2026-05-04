@@ -409,7 +409,7 @@
             });
         }
 
-       function contacterWhatsApp(produit) {
+      function contacterWhatsApp(produit) {
     const secteur = document.getElementById("secteurSelect").value;
     let numero = "";
 
@@ -417,12 +417,10 @@
         numero = "50948819709";
     } else if (secteur === "hinche") {
         numero = "50936199431";
-    } else if (secteur === "Cap-Haïtien") {
-        numero = "50935630388";
-    } else if (secteur === "portdepaix") {
+    } else if (secteur === "okap" || secteur === "portdepaix") {
         numero = "50935630388";
     } else {
-        numero = "50936199431";
+        numero = "50936199431"; // valeur par défaut
     }
 
     const message = `Bonjour, je suis intéressé(e) par : ${produit.nom} (${produit.prix})`;
