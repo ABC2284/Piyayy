@@ -298,6 +298,8 @@
         <select id="secteurSelect">
             <option value="maissade">🏠 Maïssade</option>
             <option value="hinche">🏙️ Hinche</option>
+            <option value="okap">🏖️ Okap (Cap-Haïtien)</option>
+            <option value="portdepaix">🏝️ Port-de-Paix</option>
         </select>
     </div>
 
@@ -319,8 +321,8 @@
     </div>
 
     <footer>
-        <p>📍 Maïssade / Hinche | 📞 WhatsApp direct</p>
-        <p>© 2026 PIYAYY - Tous droits réservés</p>
+      <p>📍 Maïssade / Hinche / Cap-Haïtien / Port-de-Paix | 📞 WhatsApp direct</p>
+      <p>© 2026 PIYAYY - Tous droits réservés</p>
         <span id="secretAdminTrigger"></span>
     </footer>
 
@@ -407,13 +409,25 @@
             });
         }
 
-        function contacterWhatsApp(produit) {
-            const secteur = document.getElementById("secteurSelect").value;
-            const numero = secteur === "maissade" ? "50948819709" : "50936199431";
-            const message = `Bonjour, je suis intéressé(e) par : ${produit.nom} (${produit.prix})`;
-            window.open(`https://wa.me/${numero}?text=${encodeURIComponent(message)}`, '_blank');
-        }
+       function contacterWhatsApp(produit) {
+    const secteur = document.getElementById("secteurSelect").value;
+    let numero = "";
 
+    if (secteur === "maissade") {
+        numero = "50948819709";
+    } else if (secteur === "hinche") {
+        numero = "50936199431";
+    } else if (secteur === "Cap-Haïtien") {
+        numero = "50935630388";
+    } else if (secteur === "portdepaix") {
+        numero = "50935630388";
+    } else {
+        numero = "50936199431";
+    }
+
+    const message = `Bonjour, je suis intéressé(e) par : ${produit.nom} (${produit.prix})`;
+    window.open(`https://wa.me/${numero}?text=${encodeURIComponent(message)}`, '_blank');
+}
         document.getElementById("searchInput")?.addEventListener("input", (e) => {
             rechercheTexte = e.target.value.toLowerCase();
             appliquerFiltres();
