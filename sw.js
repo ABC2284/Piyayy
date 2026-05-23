@@ -1,4 +1,4 @@
-const CACHE_NAME = 'piyayy-cache-v3';
+const CACHE_NAME = 'piyayy-cache-v4';
 const urlsToCache = [
   './',
   './splash.html',
