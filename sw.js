@@ -1,4 +1,5 @@
-const CACHE_NAME = 'piyayy-cache-v4';
+
+const CACHE_NAME = 'piyayy-cache-v6';
 const urlsToCache = [
   './',
   './splash.html',
@@ -42,6 +43,25 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+  const url = event.request.url;
+
+  // ⭐ STRATÉGIE SPÉCIALE POUR produits.json : toujours aller sur le réseau d'abord
+  if (url.includes('produits.json')) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseToCache);
+          });
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Stratégie normale pour les autres fichiers (cache d'abord)
   event.respondWith(
     caches.match(event.request).then(response => {
       if (response) {
@@ -57,7 +77,6 @@ self.addEventListener('fetch', event => {
         return response;
       });
     }).catch(() => {
-      // Fallback hors ligne : si on demande une page HTML, on renvoie splash.html
       if (event.request.destination === 'document') {
         return caches.match('./splash.html');
       }
