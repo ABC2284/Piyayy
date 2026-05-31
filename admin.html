@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>PIYAYY - Admin</title>
 
-    <!-- PWA -->
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -93,7 +92,7 @@
 <body>
     <h1>🏋️‍♂️🏋️‍♀️ Admin PIYAYY</h1>
 
-    <!-- Sauvegarde / Restauration (locale) -->
+    <!-- Sauvegarde / Restauration locale -->
     <div class="card">
         <h2>💾 Sauvegarde / Restauration locale</h2>
         <div class="buttons-group">
@@ -134,22 +133,20 @@
         <div id="listeProduitsAdmin"></div>
     </div>
 
-    <!-- Configuration Firebase (à remplacer par TES données) -->
     <script>
-        // ⚠️ REMPLACE ICI PAR TA VRAIE CONFIGURATION FIREBASE ⚠️
+        // Configuration Firebase (ta vraie configuration)
         const firebaseConfig = {
-            apiKey: "VOTRE_API_KEY",
-            authDomain: "VOTRE_AUTH_DOMAIN",
-            projectId: "VOTRE_PROJECT_ID",
-            storageBucket: "VOTRE_STORAGE_BUCKET",
-            messagingSenderId: "VOTRE_SENDER_ID",
-            appId: "VOTRE_APP_ID"
+            apiKey: "AIzaSyCvTJoU9sgsebLddIzR_ULMKOPtAME01Vo",
+            authDomain: "piyayy-prod.firebaseapp.com",
+            projectId: "piyayy-prod",
+            storageBucket: "piyayy-prod.firebasestorage.app",
+            messagingSenderId: "643997106002",
+            appId: "1:643997106002:web:3f942ffa6f02b1c991c48b",
+            measurementId: "G-NVY4BTT000"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-    </script>
 
-    <script>
         let imageData = null;
 
         // Upload image
@@ -364,14 +361,12 @@
                 try {
                     const produits = JSON.parse(ev.target.result);
                     if (!Array.isArray(produits)) throw new Error();
-                    // On vide d'abord Firestore
                     const snapshot = await db.collection("produits").get();
                     const batch = db.batch();
                     snapshot.forEach(doc => batch.delete(doc.ref));
                     await batch.commit();
-                    // On ajoute tous les produits importés
                     for (const prod of produits) {
-                        const { id, ...data } = prod; // on ignore l'id existant
+                        const { id, ...data } = prod;
                         await db.collection("produits").add(data);
                     }
                     await afficherListeAdmin();
