@@ -1,13 +1,10 @@
-
-const CACHE_NAME = 'piyayy-cache-v6';
+const CACHE_NAME = 'piyayy-cache-v7';
 const urlsToCache = [
   './',
   './splash.html',
   './index.html',
   './admin.html',
   './style.css',
-  './script.js',
-  './produits.json',
   './fond.jpg',
   './fond-splash.jpg',
   './icon-piyayy.png',
@@ -43,25 +40,14 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-  const url = event.request.url;
-
-  // ⭐ STRATÉGIE SPÉCIALE POUR produits.json : toujours aller sur le réseau d'abord
-  if (url.includes('produits.json')) {
-    event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, responseToCache);
-          });
-          return response;
-        })
-        .catch(() => caches.match(event.request))
-    );
+  // On laisse passer les requêtes vers Firebase (Firestore)
+  if (event.request.url.includes('firestore.googleapis.com') ||
+      event.request.url.includes('firebase')) {
+    event.respondWith(fetch(event.request));
     return;
   }
 
-  // Stratégie normale pour les autres fichiers (cache d'abord)
+  // Pour les autres requêtes (fichiers statiques)
   event.respondWith(
     caches.match(event.request).then(response => {
       if (response) {
