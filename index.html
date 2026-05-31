@@ -36,6 +36,10 @@
     <!-- Image de démarrage pour iPhone -->
     <link rel="apple-touch-startup-image" href="fond-splash.jpg">
 
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
     <style>
         * {
             margin: 0;
@@ -298,7 +302,7 @@
         <select id="secteurSelect">
             <option value="maissade">🏠 Maïssade</option>
             <option value="hinche">🏙️ Hinche</option>
-            <option value="Cap-Haïtien">🏖️ Cap-Haïtien</option>
+            <option value="okap">🏖️ Cap-Haïtien</option>
             <option value="portdepaix">🏝️ Port-de-Paix</option>
         </select>
     </div>
@@ -321,17 +325,105 @@
     </div>
 
     <footer>
-      <p>📍 Maïssade / Hinche / Cap-Haïtien / Port-de-Paix | 📞 WhatsApp direct</p>
-      <p>© 2026 PIYAYY - Tous droits réservés</p>
-        <span id="secretAdminTrigger">🏋️‍♀️🏋️‍♂️</span>
+        <p>📍 Maïssade / Hinche / Cap-Haïtien / Port-de-Paix | 📞 WhatsApp direct</p>
+        <p>© 2026 PIYAYY - Tous droits réservés</p>
+        <span id="secretAdminTrigger"></span>
     </footer>
 
-    <script src="script.js"></script>
     <script>
-        if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.register("sw.js").catch(console.log);
+        // Firebase configuration (à remplacer par TA config si différente)
+        const firebaseConfig = {
+            apiKey: "AIzaSyCvTJoU9sgsebLddIzR_ULMKOPtAME01Vo",
+            authDomain: "piyayy-prod.firebaseapp.com",
+            projectId: "piyayy-prod",
+            storageBucket: "piyayy-prod.firebasestorage.app",
+            messagingSenderId: "643997106002",
+            appId: "1:643997106002:web:3f942ffa6f02b1c991c48b",
+            measurementId: "G-NVY4BTT000"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        let produits = [];
+        let filtreCategorie = "all";
+        let rechercheTexte = "";
+
+        // Charger les produits depuis Firestore
+        async function chargerProduits() {
+            try {
+                const snapshot = await db.collection("produits").orderBy("nom").get();
+                produits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                appliquerFiltres();
+            } catch (error) {
+                console.error("Firestore erreur:", error);
+                produits = [];
+                appliquerFiltres();
+            }
         }
 
+        // Afficher les produits filtrés
+        function appliquerFiltres() {
+            let filtres = [...produits];
+            if (filtreCategorie !== "all") {
+                filtres = filtres.filter(p => p.categorie === filtreCategorie);
+            }
+            if (rechercheTexte) {
+                filtres = filtres.filter(p => p.nom.toLowerCase().includes(rechercheTexte));
+            }
+            afficherProduitsAvecFiltres(filtres);
+        }
+
+        function afficherProduitsAvecFiltres(liste) {
+            const container = document.getElementById("produitsList");
+            if (!container) return;
+            if (!Array.isArray(liste) || liste.length === 0) {
+                container.innerHTML = "<p style='text-align:center; padding:2rem;'>Aucun produit trouvé.</p>";
+                return;
+            }
+            let html = "";
+            liste.forEach(p => {
+                const imgHtml = p.image ? `<img src="${p.image}" alt="${p.nom}">` : `<div>📦</div>`;
+                html += `
+                    <div class="produit-card" data-id="${p.id}">
+                        <div class="produit-image">${imgHtml}</div>
+                        <div class="produit-info">
+                            <div class="produit-titre">${escapeHtml(p.nom)}</div>
+                            <div class="produit-prix">💰 ${escapeHtml(p.prix)}</div>
+                            <button class="btn-contact" data-id="${p.id}">📞 Contacter</button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+            document.querySelectorAll(".btn-contact").forEach(btn => {
+                btn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    const id = btn.getAttribute("data-id");
+                    const produit = produits.find(p => p.id === id);
+                    if (produit) contacterWhatsApp(produit);
+                });
+            });
+        }
+
+        function contacterWhatsApp(produit) {
+            const secteur = document.getElementById("secteurSelect").value;
+            let numero = "";
+            if (secteur === "maissade") {
+                numero = "50948819709";
+            } else if (secteur === "hinche") {
+                numero = "50936199431";
+            } else if (secteur === "okap") {
+                numero = "50935630388";
+            } else if (secteur === "portdepaix") {
+                numero = "50932298448";
+            } else {
+                numero = "50936199431";
+            }
+            const message = `Bonjour, je suis intéressé(e) par : ${produit.nom} (${produit.prix})`;
+            window.open(`https://wa.me/${numero}?text=${encodeURIComponent(message)}`, '_blank');
+        }
+
+        // Gestion des catégories et fonds
         function changerFondCategorie(categorie) {
             let imageFond = "fond.jpg";
             if (categorie === "Protéine") imageFond = "fond-proteine.jpg";
@@ -367,67 +459,6 @@
             });
         }
 
-        let filtreCategorie = "all";
-        let rechercheTexte = "";
-
-        function appliquerFiltres() {
-            let filtres = [...produits];
-            if (filtreCategorie !== "all") filtres = filtres.filter(p => p.categorie === filtreCategorie);
-            if (rechercheTexte) filtres = filtres.filter(p => p.nom.toLowerCase().includes(rechercheTexte));
-            afficherProduitsAvecFiltres(filtres);
-        }
-
-        function afficherProduitsAvecFiltres(liste) {
-            const container = document.getElementById("produitsList");
-            if (!container) return;
-            if (!Array.isArray(liste) || liste.length === 0) {
-                container.innerHTML = "<p style='text-align:center; padding:2rem;'>Aucun produit trouvé.</p>";
-                return;
-            }
-            let html = "";
-            liste.forEach(p => {
-                const imgHtml = p.image ? `<img src="${p.image}" alt="${p.nom}">` : `<div>📦</div>`;
-                html += `
-                    <div class="produit-card" data-id="${p.id}">
-                        <div class="produit-image">${imgHtml}</div>
-                        <div class="produit-info">
-                            <div class="produit-titre">${escapeHtml(p.nom)}</div>
-                            <div class="produit-prix">💰 ${escapeHtml(p.prix)}</div>
-                            <button class="btn-contact" data-id="${p.id}">📞 Contacter</button>
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-            document.querySelectorAll(".btn-contact").forEach(btn => {
-                btn.addEventListener("click", (e) => {
-                    e.stopPropagation();
-                    const id = parseInt(btn.getAttribute("data-id"));
-                    const produit = produits.find(p => p.id === id);
-                    if (produit) contacterWhatsApp(produit);
-                });
-            });
-        }
-
-     function contacterWhatsApp(produit) {
-    const secteur = document.getElementById("secteurSelect").value;
-    let numero = "";
-
-    if (secteur === "maissade") {
-        numero = "50948819709";
-    } else if (secteur === "hinche") {
-        numero = "50936199431";
-    } else if (secteur === "Cap-Haïtien") {
-        numero = "50935630388";
-    } else if (secteur === "portdepaix") {
-        numero = "50932298448";
-    } else {
-        numero = "50936199431";
-    }
-
-    const message = `Bonjour, je suis intéressé(e) par : ${produit.nom} (${produit.prix})`;
-    window.open(`https://wa.me/${numero}?text=${encodeURIComponent(message)}`, '_blank');
-}
         document.getElementById("searchInput")?.addEventListener("input", (e) => {
             rechercheTexte = e.target.value.toLowerCase();
             appliquerFiltres();
@@ -439,8 +470,18 @@
             else if (code) alert("❌ Code incorrect");
         });
 
+        function escapeHtml(str) {
+            if (!str) return "";
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
         genererCategories();
-        appliquerFiltres();
+        chargerProduits();
     </script>
 </body>
 </html>
