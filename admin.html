@@ -12,6 +12,11 @@
     <meta name="apple-mobile-web-app-title" content="Piyayy">
     <meta name="theme-color" content="#1e3c72">
     <link rel="apple-touch-icon" href="icon-piyayy.png">
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
     <style>
         body {
             font-family: system-ui;
@@ -86,17 +91,17 @@
     </style>
 </head>
 <body>
-    <h1>🏋️‍♂️🏋️‍♀️</h1>
+    <h1>🏋️‍♂️🏋️‍♀️ Admin PIYAYY</h1>
 
-    <!-- Sauvegarde / Restauration -->
+    <!-- Sauvegarde / Restauration (locale) -->
     <div class="card">
-        <h2>💾 Sauvegarde / Restauration</h2>
+        <h2>💾 Sauvegarde / Restauration locale</h2>
         <div class="buttons-group">
-            <button id="exporterBtn">📁 Sauvegarder les produits (JSON)</button>
-            <button id="importerBtn" class="secondary">📂 Restaurer depuis un fichier</button>
+            <button id="exporterBtn">📁 Sauvegarder (JSON)</button>
+            <button id="importerBtn" class="secondary">📂 Restaurer depuis fichier</button>
             <input type="file" id="fichierImport" accept=".json" style="display: none;">
         </div>
-        <p style="font-size: 0.8rem; margin-top: 10px;">💡 Sauvegardez vos produits dans un fichier pour ne jamais les perdre.</p>
+        <p style="font-size: 0.8rem; margin-top: 10px;">💡 Sauvegardez vos produits dans un fichier (utile pour migration ou backup).</p>
     </div>
 
     <!-- Ajouter un produit -->
@@ -129,7 +134,21 @@
         <div id="listeProduitsAdmin"></div>
     </div>
 
-    <script src="script.js"></script>
+    <!-- Configuration Firebase (à remplacer par TES données) -->
+    <script>
+        // ⚠️ REMPLACE ICI PAR TA VRAIE CONFIGURATION FIREBASE ⚠️
+        const firebaseConfig = {
+            apiKey: "VOTRE_API_KEY",
+            authDomain: "VOTRE_AUTH_DOMAIN",
+            projectId: "VOTRE_PROJECT_ID",
+            storageBucket: "VOTRE_STORAGE_BUCKET",
+            messagingSenderId: "VOTRE_SENDER_ID",
+            appId: "VOTRE_APP_ID"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+    </script>
+
     <script>
         let imageData = null;
 
@@ -149,56 +168,101 @@
             }
         });
 
-        // Afficher la liste admin avec boutons Modifier / Supprimer
-        function afficherListeAdmin() {
-            const container = document.getElementById("listeProduitsAdmin");
-            if (!produits.length) {
-                container.innerHTML = "<p>Aucun produit</p>";
-                return;
+        // ==================== FIRESTORE CRUD ====================
+        async function ajouterProduitFirestore(produit) {
+            try {
+                const docRef = await db.collection("produits").add(produit);
+                produit.id = docRef.id;
+                return true;
+            } catch (error) {
+                console.error("Erreur Firestore (ajout):", error);
+                return false;
             }
-            let html = "";
-            produits.forEach(p => {
-                html += `
-                    <div class="produit-item">
-                        <div>
-                            <strong>${escapeHtml(p.nom)}</strong> - ${escapeHtml(p.prix)}<br>
-                            <small>${escapeHtml(p.categorie)}</small>
-                        </div>
-                        <div class="produit-actions">
-                            <button class="modifier-btn" data-id="${p.id}">✏️ Modifier</button>
-                            <button class="supprimer-btn" data-id="${p.id}">🗑️ Supprimer</button>
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-
-            // Événement Supprimer
-            document.querySelectorAll(".supprimer-btn").forEach(btn => {
-                btn.addEventListener("click", () => {
-                    const id = parseInt(btn.getAttribute("data-id"));
-                    if (confirm("Supprimer ce produit ?")) {
-                        produits = produits.filter(p => p.id !== id);
-                        sauvegarderProduits();
-                        afficherListeAdmin();
-                        if (typeof appliquerFiltres === "function") appliquerFiltres();
-                    }
-                });
-            });
-
-            // Événement Modifier
-            document.querySelectorAll(".modifier-btn").forEach(btn => {
-                btn.addEventListener("click", () => {
-                    const id = parseInt(btn.getAttribute("data-id"));
-                    modifierProduit(id);
-                });
-            });
         }
 
-        // Modifier un produit (avec catégorie modifiable)
-        function modifierProduit(id) {
-            const produit = produits.find(p => p.id === id);
-            if (!produit) return;
+        async function supprimerProduitFirestore(id) {
+            try {
+                await db.collection("produits").doc(id).delete();
+                return true;
+            } catch (error) {
+                console.error("Erreur Firestore (suppression):", error);
+                return false;
+            }
+        }
+
+        async function modifierProduitFirestore(id, nouvellesDonnees) {
+            try {
+                await db.collection("produits").doc(id).update(nouvellesDonnees);
+                return true;
+            } catch (error) {
+                console.error("Erreur Firestore (modification):", error);
+                return false;
+            }
+        }
+
+        // Afficher la liste admin depuis Firestore
+        async function afficherListeAdmin() {
+            const container = document.getElementById("listeProduitsAdmin");
+            try {
+                const snapshot = await db.collection("produits").orderBy("nom").get();
+                if (snapshot.empty) {
+                    container.innerHTML = "<p>Aucun produit</p>";
+                    return;
+                }
+                let html = "";
+                snapshot.forEach(doc => {
+                    const p = doc.data();
+                    html += `
+                        <div class="produit-item" data-id="${doc.id}">
+                            <div>
+                                <strong>${escapeHtml(p.nom)}</strong> - ${escapeHtml(p.prix)}<br>
+                                <small>${escapeHtml(p.categorie)}</small>
+                            </div>
+                            <div class="produit-actions">
+                                <button class="modifier-btn" data-id="${doc.id}">✏️ Modifier</button>
+                                <button class="supprimer-btn" data-id="${doc.id}">🗑️ Supprimer</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+
+                // Événements Supprimer
+                document.querySelectorAll(".supprimer-btn").forEach(btn => {
+                    btn.addEventListener("click", async (e) => {
+                        e.stopPropagation();
+                        const id = btn.getAttribute("data-id");
+                        if (confirm("Supprimer ce produit ?")) {
+                            const ok = await supprimerProduitFirestore(id);
+                            if (ok) {
+                                await afficherListeAdmin();
+                                if (typeof appliquerFiltres === "function") appliquerFiltres();
+                            } else {
+                                alert("Erreur lors de la suppression");
+                            }
+                        }
+                    });
+                });
+
+                // Événements Modifier
+                document.querySelectorAll(".modifier-btn").forEach(btn => {
+                    btn.addEventListener("click", async (e) => {
+                        e.stopPropagation();
+                        const id = btn.getAttribute("data-id");
+                        await modifierProduitUI(id);
+                    });
+                });
+            } catch (error) {
+                console.error("Erreur affichage:", error);
+                container.innerHTML = "<p>Erreur de chargement</p>";
+            }
+        }
+
+        // Modifier un produit (UI avec prompt, puis mise à jour Firestore)
+        async function modifierProduitUI(id) {
+            const doc = await db.collection("produits").doc(id).get();
+            if (!doc.exists) return;
+            const produit = doc.data();
 
             const nouveauNom = prompt("Nouveau nom :", produit.nom);
             if (nouveauNom !== null && nouveauNom.trim() !== "") produit.nom = nouveauNom.trim();
@@ -206,68 +270,83 @@
             const nouveauPrix = prompt("Nouveau prix :", produit.prix);
             if (nouveauPrix !== null && nouveauPrix.trim() !== "") produit.prix = nouveauPrix.trim();
 
-            // Changement de catégorie avec liste déroulante visuelle
-            const nouvelleCategorie = prompt("Nouvelle catégorie (Protéine, Créatine, Vitamine, Pre-Workout) :", produit.categorie);
+            const nouvelleCategorie = prompt("Nouvelle catégorie (Protéine, Créatine, Vitamine, Pre-Workout, BCAA, SHACKER) :", produit.categorie);
             if (nouvelleCategorie !== null && nouvelleCategorie.trim() !== "") produit.categorie = nouvelleCategorie.trim();
 
             const nouvelleDescription = prompt("Nouvelle description :", produit.description || "");
             if (nouvelleDescription !== null) produit.description = nouvelleDescription;
 
+            let nouvelleImage = null;
             if (confirm("Changer l'image ?")) {
                 const input = document.createElement("input");
                 input.type = "file";
                 input.accept = "image/*";
-                input.onchange = (e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                        const reader = new FileReader();
-                        reader.onload = (ev) => {
-                            produit.image = ev.target.result;
-                            sauvegarderProduits();
-                            afficherListeAdmin();
-                            if (typeof appliquerFiltres === "function") appliquerFiltres();
-                            alert("✅ Produit modifié (image comprise) !");
-                        };
-                        reader.readAsDataURL(file);
-                    }
-                };
-                input.click();
-            } else {
-                sauvegarderProduits();
-                afficherListeAdmin();
+                nouvelleImage = await new Promise((resolve) => {
+                    input.onchange = async (e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (ev) => resolve(ev.target.result);
+                            reader.readAsDataURL(file);
+                        } else {
+                            resolve(null);
+                        }
+                    };
+                    input.click();
+                });
+                if (nouvelleImage) produit.image = nouvelleImage;
+            }
+
+            const ok = await modifierProduitFirestore(id, {
+                nom: produit.nom,
+                prix: produit.prix,
+                categorie: produit.categorie,
+                description: produit.description,
+                image: produit.image || null
+            });
+            if (ok) {
+                await afficherListeAdmin();
                 if (typeof appliquerFiltres === "function") appliquerFiltres();
                 alert("✅ Produit modifié !");
+            } else {
+                alert("❌ Erreur lors de la modification");
             }
         }
 
-        // Ajouter produit
-        document.getElementById("ajouterBtn").addEventListener("click", () => {
+        // Ajouter produit (depuis le formulaire)
+        document.getElementById("ajouterBtn").addEventListener("click", async () => {
             const nom = document.getElementById("nom").value.trim();
             const prix = document.getElementById("prix").value.trim();
             const categorie = document.getElementById("categorie").value;
             const description = document.getElementById("description").value.trim();
             if (!nom || !prix) return alert("Nom et prix requis");
-            produits.push({
-                id: Date.now(),
+
+            const nouveauProduit = {
                 nom,
                 prix,
                 categorie,
                 description,
-                image: imageData || null
-            });
-            sauvegarderProduits();
-            afficherListeAdmin();
-            if (typeof appliquerFiltres === "function") appliquerFiltres();
-            document.getElementById("nom").value = "";
-            document.getElementById("prix").value = "";
-            document.getElementById("description").value = "";
-            document.getElementById("imagePreview").innerHTML = "";
-            imageData = null;
-            alert("✅ Produit ajouté");
+                image: imageData || null,
+                date: new Date().toISOString()
+            };
+            const ok = await ajouterProduitFirestore(nouveauProduit);
+            if (ok) {
+                await afficherListeAdmin();
+                document.getElementById("nom").value = "";
+                document.getElementById("prix").value = "";
+                document.getElementById("description").value = "";
+                document.getElementById("imagePreview").innerHTML = "";
+                imageData = null;
+                alert("✅ Produit ajouté !");
+            } else {
+                alert("❌ Erreur lors de l'ajout");
+            }
         });
 
-        // Sauvegarde / Restauration
-        function exporterProduits() {
+        // ==================== SAUVEGARDE / RESTAURATION LOCALE (JSON) ====================
+        async function exporterProduits() {
+            const snapshot = await db.collection("produits").orderBy("nom").get();
+            const produits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             const data = JSON.stringify(produits, null, 2);
             const blob = new Blob([data], {type: "application/json"});
             const url = URL.createObjectURL(blob);
@@ -279,35 +358,52 @@
             alert("✅ Produits sauvegardés !");
         }
 
-        document.getElementById("exporterBtn").addEventListener("click", exporterProduits);
+        async function importerProduits(fichier) {
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                try {
+                    const produits = JSON.parse(ev.target.result);
+                    if (!Array.isArray(produits)) throw new Error();
+                    // On vide d'abord Firestore
+                    const snapshot = await db.collection("produits").get();
+                    const batch = db.batch();
+                    snapshot.forEach(doc => batch.delete(doc.ref));
+                    await batch.commit();
+                    // On ajoute tous les produits importés
+                    for (const prod of produits) {
+                        const { id, ...data } = prod; // on ignore l'id existant
+                        await db.collection("produits").add(data);
+                    }
+                    await afficherListeAdmin();
+                    if (typeof appliquerFiltres === "function") appliquerFiltres();
+                    alert("✅ Produits restaurés avec succès !");
+                } catch (err) {
+                    alert("❌ Fichier invalide");
+                }
+            };
+            reader.readAsText(fichier);
+        }
 
+        document.getElementById("exporterBtn").addEventListener("click", exporterProduits);
         document.getElementById("importerBtn").addEventListener("click", () => {
             document.getElementById("fichierImport").click();
         });
-
         document.getElementById("fichierImport").addEventListener("change", (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                try {
-                    const nouveauxProduits = JSON.parse(ev.target.result);
-                    if (Array.isArray(nouveauxProduits)) {
-                        produits = nouveauxProduits;
-                        sauvegarderProduits();
-                        afficherListeAdmin();
-                        if (typeof appliquerFiltres === "function") appliquerFiltres();
-                        alert("✅ Produits restaurés avec succès !");
-                    } else {
-                        alert("❌ Fichier invalide");
-                    }
-                } catch (err) {
-                    alert("❌ Erreur de lecture du fichier");
-                }
-            };
-            reader.readAsText(file);
+            if (e.target.files.length) importerProduits(e.target.files[0]);
         });
 
+        // Helper
+        function escapeHtml(str) {
+            if (!str) return "";
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        // Initialisation
         afficherListeAdmin();
     </script>
 </body>
