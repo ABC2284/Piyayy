@@ -343,6 +343,10 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        // Activer la persistance hors ligne
+        db.enablePersistence()
+          .then(() => console.log("Persistance activée"))
+          .catch(err => console.error("Erreur persistance:", err));
 
         let produits = [];
         let filtreCategorie = "all";
