@@ -331,7 +331,7 @@
     </footer>
 
     <script>
-        // Firebase configuration (à remplacer par TA config si différente)
+        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyCvTJoU9sgsebLddIzR_ULMKOPtAME01Vo",
             authDomain: "piyayy-prod.firebaseapp.com",
@@ -343,6 +343,7 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+
         // Activer la persistance hors ligne
         db.enablePersistence()
           .then(() => console.log("Persistance activée"))
@@ -352,17 +353,19 @@
         let filtreCategorie = "all";
         let rechercheTexte = "";
 
-        // Charger les produits depuis Firestore
-        async function chargerProduits() {
-            try {
-                const snapshot = await db.collection("produits").orderBy("nom").get();
+        // Écoute en temps réel avec onSnapshot
+        let unsubscribe = null;
+
+        function chargerProduits() {
+            if (unsubscribe) unsubscribe();
+            unsubscribe = db.collection("produits").orderBy("nom").onSnapshot((snapshot) => {
                 produits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 appliquerFiltres();
-            } catch (error) {
+            }, (error) => {
                 console.error("Firestore erreur:", error);
                 produits = [];
                 appliquerFiltres();
-            }
+            });
         }
 
         // Afficher les produits filtrés
