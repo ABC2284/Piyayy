@@ -336,7 +336,7 @@
     </footer>
 
     <script>
-        // ===== CONFIGURATION FIREBASE =====
+               // ===== CONFIGURATION FIREBASE =====
         const firebaseConfig = {
             apiKey: "AIzaSyCvTJoU9sgsebLddIzR_ULMKOPtAME01Vo",
             authDomain: "piyayy-prod.firebaseapp.com",
@@ -359,6 +359,7 @@
         let filtreCategorie = "all";
         let rechercheTexte = "";
         let unsubscribe = null;
+        let affichageInitial = false;
 
         // ===== CHARGER LES PRODUITS EN TEMPS RÉEL =====
         function chargerProduits() {
@@ -372,58 +373,22 @@
                     });
                     console.log("📦 Produits chargés:", produits.length);
                     
-                    // ⭐ ATTENDRE 500ms avant d'appliquer les filtres
-                    setTimeout(() => {
-                        appliquerFiltres();
-                    }, 500);
+                    // ⭐ On affiche directement sans passer par des filtres complexes
+                    afficherProduitsDirect(produits);
                 }, (error) => {
                     console.error("❌ Firestore erreur:", error);
                     produits = [];
-                    appliquerFiltres();
+                    afficherProduitsDirect([]);
                 });
         }
 
-        // ===== APPLIQUER LES FILTRES =====
-        function appliquerFiltres() {
-            // Si la liste des produits est vide, on affiche un message
-            if (produits.length === 0) {
-                afficherProduits([]);
-                return;
-            }
-            
-            let filtres = [...produits];
-            if (filtreCategorie !== "all") {
-                filtres = filtres.filter(p => p.categorie === filtreCategorie);
-            }
-            if (rechercheTexte) {
-                const search = rechercheTexte.toLowerCase();
-                filtres = filtres.filter(p => p.nom && p.nom.toLowerCase().includes(search));
-            }
-            
-            // ⭐ S'assurer qu'on affiche au moins les produits si filtres est vide
-            if (filtres.length === 0 && produits.length > 0) {
-                // Si le filtre est vide mais que des produits existent, on affiche tout
-                if (filtreCategorie === "all" && !rechercheTexte) {
-                    filtres = [...produits];
-                }
-            }
-            
-            afficherProduits(filtres);
-        }
-
-        // ===== AFFICHER LES PRODUITS =====
-        function afficherProduits(liste) {
+        // ===== AFFICHER DIRECTEMENT LES PRODUITS (SANS FILTRES COMPLEXES) =====
+        function afficherProduitsDirect(liste) {
             const container = document.getElementById("produitsList");
             if (!container) return;
 
             if (!Array.isArray(liste) || liste.length === 0) {
-                // Vérifier si c'est vraiment vide ou si c'est un problème de filtre
-                if (produits.length === 0) {
-                    container.innerHTML = "<p style='text-align:center; padding:2rem;'>Aucun produit trouvé.</p>";
-                } else {
-                    // Si produits existe mais liste est vide, c'est un problème de filtre
-                    container.innerHTML = "<p style='text-align:center; padding:2rem;'>Aucun produit ne correspond à votre recherche.</p>";
-                }
+                container.innerHTML = "<p style='text-align:center; padding:2rem;'>Aucun produit trouvé.</p>";
                 return;
             }
 
@@ -452,6 +417,30 @@
                     if (produit) contacterWhatsApp(produit);
                 });
             });
+        }
+
+        // ===== APPLIQUER LES FILTRES (CATÉGORIE + RECHERCHE) =====
+        function appliquerFiltres() {
+            if (produits.length === 0) {
+                afficherProduitsDirect([]);
+                return;
+            }
+            
+            let filtres = [...produits];
+            if (filtreCategorie !== "all") {
+                filtres = filtres.filter(p => p.categorie === filtreCategorie);
+            }
+            if (rechercheTexte) {
+                const search = rechercheTexte.toLowerCase();
+                filtres = filtres.filter(p => p.nom && p.nom.toLowerCase().includes(search));
+            }
+            
+            // Si après filtrage il n'y a rien, on affiche le message
+            if (filtres.length === 0) {
+                afficherProduitsDirect([]);
+            } else {
+                afficherProduitsDirect(filtres);
+            }
         }
 
         // ===== CONTACTER WHATSAPP =====
@@ -529,6 +518,3 @@
         // ===== LANCEMENT =====
         genererCategories();
         chargerProduits();
-    </script>
-</body>
-</html>
