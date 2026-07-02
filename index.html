@@ -36,11 +36,6 @@
     <!-- Image de démarrage pour iPhone -->
     <link rel="apple-touch-startup-image" href="fond-splash.jpg">
 
-    <!-- Forcer la mise à jour du cache -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -336,7 +331,7 @@
     </footer>
 
     <script>
-               // ===== CONFIGURATION FIREBASE =====
+        // Firebase configuration (à remplacer par TA config si différente)
         const firebaseConfig = {
             apiKey: "AIzaSyCvTJoU9sgsebLddIzR_ULMKOPtAME01Vo",
             authDomain: "piyayy-prod.firebaseapp.com",
@@ -348,50 +343,47 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-
         // Activer la persistance hors ligne
         db.enablePersistence()
-            .then(() => console.log("✅ Persistance activée"))
-            .catch(err => console.warn("⚠️ Persistance non activée:", err));
+          .then(() => console.log("Persistance activée"))
+          .catch(err => console.error("Erreur persistance:", err));
 
-        // ===== VARIABLES GLOBALES =====
         let produits = [];
         let filtreCategorie = "all";
         let rechercheTexte = "";
-        let unsubscribe = null;
-        let affichageInitial = false;
 
-        // ===== CHARGER LES PRODUITS EN TEMPS RÉEL =====
-        function chargerProduits() {
-            if (unsubscribe) unsubscribe();
-            unsubscribe = db.collection("produits")
-                .orderBy("nom")
-                .onSnapshot((snapshot) => {
-                    produits = snapshot.docs.map(doc => {
-                        const data = doc.data();
-                        return { id: doc.id, ...data };
-                    });
-                    console.log("📦 Produits chargés:", produits.length);
-                    
-                    // ⭐ On affiche directement sans passer par des filtres complexes
-                    afficherProduitsDirect(produits);
-                }, (error) => {
-                    console.error("❌ Firestore erreur:", error);
-                    produits = [];
-                    afficherProduitsDirect([]);
-                });
+        // Charger les produits depuis Firestore
+        async function chargerProduits() {
+            try {
+                const snapshot = await db.collection("produits").orderBy("nom").get();
+                produits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                appliquerFiltres();
+            } catch (error) {
+                console.error("Firestore erreur:", error);
+                produits = [];
+                appliquerFiltres();
+            }
         }
 
-        // ===== AFFICHER DIRECTEMENT LES PRODUITS (SANS FILTRES COMPLEXES) =====
-        function afficherProduitsDirect(liste) {
+        // Afficher les produits filtrés
+        function appliquerFiltres() {
+            let filtres = [...produits];
+            if (filtreCategorie !== "all") {
+                filtres = filtres.filter(p => p.categorie === filtreCategorie);
+            }
+            if (rechercheTexte) {
+                filtres = filtres.filter(p => p.nom.toLowerCase().includes(rechercheTexte));
+            }
+            afficherProduitsAvecFiltres(filtres);
+        }
+
+        function afficherProduitsAvecFiltres(liste) {
             const container = document.getElementById("produitsList");
             if (!container) return;
-
             if (!Array.isArray(liste) || liste.length === 0) {
                 container.innerHTML = "<p style='text-align:center; padding:2rem;'>Aucun produit trouvé.</p>";
                 return;
             }
-
             let html = "";
             liste.forEach(p => {
                 const imgHtml = p.image ? `<img src="${p.image}" alt="${p.nom}">` : `<div>📦</div>`;
@@ -407,8 +399,6 @@
                 `;
             });
             container.innerHTML = html;
-
-            // Événements Contact
             document.querySelectorAll(".btn-contact").forEach(btn => {
                 btn.addEventListener("click", (e) => {
                     e.stopPropagation();
@@ -419,44 +409,25 @@
             });
         }
 
-        // ===== APPLIQUER LES FILTRES (CATÉGORIE + RECHERCHE) =====
-        function appliquerFiltres() {
-            if (produits.length === 0) {
-                afficherProduitsDirect([]);
-                return;
-            }
-            
-            let filtres = [...produits];
-            if (filtreCategorie !== "all") {
-                filtres = filtres.filter(p => p.categorie === filtreCategorie);
-            }
-            if (rechercheTexte) {
-                const search = rechercheTexte.toLowerCase();
-                filtres = filtres.filter(p => p.nom && p.nom.toLowerCase().includes(search));
-            }
-            
-            // Si après filtrage il n'y a rien, on affiche le message
-            if (filtres.length === 0) {
-                afficherProduitsDirect([]);
-            } else {
-                afficherProduitsDirect(filtres);
-            }
-        }
-
-        // ===== CONTACTER WHATSAPP =====
         function contacterWhatsApp(produit) {
             const secteur = document.getElementById("secteurSelect").value;
             let numero = "";
-            if (secteur === "maissade") numero = "50948819709";
-            else if (secteur === "hinche") numero = "50936199431";
-            else if (secteur === "okap") numero = "50935630388";
-            else if (secteur === "portdepaix") numero = "50932298448";
-            else numero = "50936199431";
+            if (secteur === "maissade") {
+                numero = "50948819709";
+            } else if (secteur === "hinche") {
+                numero = "50936199431";
+            } else if (secteur === "okap") {
+                numero = "50935630388";
+            } else if (secteur === "portdepaix") {
+                numero = "50932298448";
+            } else {
+                numero = "50936199431";
+            }
             const message = `Bonjour, je suis intéressé(e) par : ${produit.nom} (${produit.prix})`;
             window.open(`https://wa.me/${numero}?text=${encodeURIComponent(message)}`, '_blank');
         }
 
-        // ===== CATÉGORIES ET FONDS =====
+        // Gestion des catégories et fonds
         function changerFondCategorie(categorie) {
             let imageFond = "fond.jpg";
             if (categorie === "Protéine") imageFond = "fond-proteine.jpg";
@@ -473,7 +444,7 @@
 
         function genererCategories() {
             const container = document.getElementById("categoriesList");
-            const cats = ["Tous", "Protéine", "Créatine", "Vitamine", "Pre-Workout", "BCAA", "SHAKER"];
+            const cats = ["Tous", "Protéine", "Créatine", "Vitamine", "Pre-Workout","BCAA","SHAKER"];
             let html = `<button class="categorie-btn active" data-cat="all">📦 Tous</button>`;
             cats.slice(1).forEach(c => {
                 html += `<button class="categorie-btn" data-cat="${c}">${c}</button>`;
@@ -485,26 +456,24 @@
                     btn.classList.add("active");
                     const cat = btn.getAttribute("data-cat");
                     filtreCategorie = cat === "all" ? "all" : cat;
-                    changerFondCategorie(filtreCategorie === "all" ? "Tous" : filtreCategorie);
+                    if (cat === "all") changerFondCategorie("Tous");
+                    else changerFondCategorie(cat);
                     appliquerFiltres();
                 });
             });
         }
 
-        // ===== RECHERCHE =====
         document.getElementById("searchInput")?.addEventListener("input", (e) => {
-            rechercheTexte = e.target.value;
+            rechercheTexte = e.target.value.toLowerCase();
             appliquerFiltres();
         });
 
-        // ===== ADMIN CACHÉ =====
         document.getElementById("secretAdminTrigger")?.addEventListener("click", () => {
             const code = prompt("🔐 Code administrateur :");
             if (code === "2025202620272028") window.location.href = "admin.html";
             else if (code) alert("❌ Code incorrect");
         });
 
-        // ===== UTILITAIRE =====
         function escapeHtml(str) {
             if (!str) return "";
             return str.replace(/[&<>]/g, function(m) {
@@ -515,6 +484,8 @@
             });
         }
 
-        // ===== LANCEMENT =====
         genererCategories();
         chargerProduits();
+    </script>
+</body>
+</html>
